@@ -1,6 +1,8 @@
 ﻿#ifndef SIMPLE_LIGHTING_INCLUDED
 #define SIMPLE_LIGHTING_INCLUDED
 
+// Simple PBR rendering (metallic-smoothness workflow) with a single light.
+
 #include "UnityPBSLighting.cginc"
 
 float _Metallic;
@@ -17,7 +19,7 @@ half4 GetColor(half4 albedo, float3 position, float3 normal)
     light.dir   = lightDir;
     light.ndotl = DotClamped(normal, lightDir);
     
-    UnityIndirect indirectLight; // Set everything to zero for now
+    UnityIndirect indirectLight; // Keep everything at zero for now
     indirectLight.diffuse  = 0;
     indirectLight.specular = 0;
     

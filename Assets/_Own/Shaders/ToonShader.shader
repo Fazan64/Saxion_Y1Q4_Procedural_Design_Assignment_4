@@ -121,7 +121,8 @@
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 
                 const int numPossibleValues = 1 << _NumColorBits;
-                col = round(col * numPossibleValues) / numPossibleValues;
+                const int multiplier = max(1, numPossibleValues - 1);
+                col = round(col * multiplier) / multiplier;
                
                 return col;
             }
