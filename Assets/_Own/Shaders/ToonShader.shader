@@ -1,20 +1,71 @@
-﻿Shader "Custom/GlowShader"
+﻿Shader "Custom/Toon"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Emission ("Emission", 2D) = "black" {}
-        _EmissionIntensity ("Emission intensity", Float) = 1
-        _EmissionMapOffsetSpeed ("Emission map offset speed (XY)", Vector) = (0, 0, 0, 0)
+        _OutlineThickness ("Outline thickness", Float) = 0.01
+        _OutlineColor ("Outline color", Color) = (0,0,0,1)
+        _NumColorBits ("Bits per color channel", Range(1, 8)) = 4
         
         _Metallic ("Metallic", Range(0, 1)) = 0
 		_Smoothness ("Smoothness", Range(0, 1)) = 0
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags 
+        {
+            "RenderType"  = "Opaque"
+            "Queue" = "Transparent"
+        }
         LOD 100
+        
+        Pass
+        {
+            ZWrite Off
+            Cull Off
+            
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fog
+            
+            #include "UnityCG.cginc"
+            
+            float _OutlineThickness;
+            half4 _OutlineColor;
+            
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float3 normal : NORMAL;
+            };
 
+            struct v2f
+            {
+                float4 position : SV_POSITION;
+                UNITY_FOG_COORDS(0)
+            };
+                     
+            v2f vert (appdata v)
+            {
+                v2f o;
+                v.vertex.xyz += v.normal * _OutlineThickness;
+                o.position = UnityObjectToClipPos(v.vertex);
+                
+                UNITY_TRANSFER_FOG(o, o.position);
+
+                return o;
+            } 
+            
+            fixed4 frag (v2f i) : SV_Target
+            {
+                half4 color = _OutlineColor;        
+                UNITY_APPLY_FOG(i.fogCoord, col);
+                return color;
+            }
+            
+            ENDCG
+        }
         Pass
         {
             CGPROGRAM
@@ -46,10 +97,7 @@
             sampler2D _MainTex;
             float4 _MainTex_ST;
             
-            sampler2D _Emission;
-            float4 _Emission_ST;
-            float _EmissionIntensity;
-            float2 _EmissionMapOffsetSpeed;
+            int _NumColorBits;
                      
             v2f vert (appdata v)
             {
@@ -62,24 +110,18 @@
                 UNITY_TRANSFER_FOG(o, o.position);
                 
                 return o;
-            }
-            
-            inline half4 GetEmission(float2 uv)
-            {
-                float2 offset = _Time.yy * _EmissionMapOffsetSpeed;
-                uv = TRANSFORM_TEX(uv, _Emission) + offset;
-                return tex2D(_Emission, uv) * _EmissionIntensity;
-            }
+            } 
                  
             fixed4 frag (v2f i) : SV_Target
             {
                 half4 col = tex2D(_MainTex, TRANSFORM_TEX(i.uv, _MainTex));
                 
                 col = GetColor(col, i.positionWorldSpace, i.normal);
-                
-                col += GetEmission(i.uv);
-                
+                                
                 UNITY_APPLY_FOG(i.fogCoord, col);
+                
+                const int numPossibleValues = 1 << _NumColorBits;
+                col = round(col * numPossibleValues) / numPossibleValues;
                
                 return col;
             }

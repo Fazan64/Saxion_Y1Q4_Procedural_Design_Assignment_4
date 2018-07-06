@@ -6,10 +6,11 @@
 float _Metallic;
 float _Smoothness;
 
+/// position and normal are in worldspace.
 half4 GetColor(half4 albedo, float3 position, float3 normal)
 {
-    float3 viewDir = normalize(_WorldSpaceCameraPos - position);
-    float3 lightDir = _WorldSpaceLightPos0.xyz;
+    float3 viewDir  = normalize(UnityWorldSpaceViewDir (position));
+    float3 lightDir = normalize(UnityWorldSpaceLightDir(position));
 
     UnityLight light;
     light.color = _LightColor0.rgb;
@@ -34,4 +35,4 @@ half4 GetColor(half4 albedo, float3 position, float3 normal)
     ).xyz, albedo.w);
 }
 
-#endif //#ifndef SIMPLE_LIGHTING_INCLUDED
+#endif //ifndef SIMPLE_LIGHTING_INCLUDED

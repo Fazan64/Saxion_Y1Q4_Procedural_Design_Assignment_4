@@ -30,7 +30,6 @@
 			#pragma fragment frag
 			
 			#include "UnityCG.cginc"
-            #include "UnityLightingCommon.cginc" // for _LightColor0
             #include "SimpleLighting.cginc"
 
 			struct appdata

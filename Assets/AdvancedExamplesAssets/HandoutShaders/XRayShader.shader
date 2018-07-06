@@ -17,7 +17,6 @@
 		BlendOp Add
 		Blend SrcAlpha OneMinusSrcAlpha
 
-
 		Tags {
 			"Queue" = "Transparent-1"
 		}
