@@ -1,4 +1,4 @@
-﻿Shader "Unlit/WoodShader"
+﻿Shader "Custom/WoodShader"
 {
 	Properties
 	{
@@ -28,7 +28,7 @@
 			#pragma vertex vert
 			#pragma fragment frag
 			
-			#include "UnityPBSLighting.cginc"
+			#include "SimpleLighting.cginc"
 
 			struct appdata
 			{
@@ -38,9 +38,9 @@
 
 			struct v2f
 			{
-                float4 vertex : SV_POSITION;
-                float3 vertexWorldSpace : TEXCOORD0;
-				float3 vertexObjectSpace : TEXCOORD1;
+                float4 position : SV_POSITION;
+                float3 positionWorldSpace : TEXCOORD0;
+				float3 positionObjectSpace : TEXCOORD1;
 				float3 normal : TEXCOORD2;
 			};
 
@@ -48,25 +48,22 @@
 			float4 _Color2;
 			float _RingWidth;
 			
-			float _Metallic;
-			float _Smoothness;
-			
 			v2f vert(appdata v)
 			{
 				v2f o;
-				o.vertexObjectSpace = v.vertex;
-				o.vertexWorldSpace = mul(unity_ObjectToWorld, v.vertex);
-				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.positionObjectSpace = v.vertex;
+				o.positionWorldSpace = mul(unity_ObjectToWorld, v.vertex);
+				o.position = UnityObjectToClipPos(v.vertex);
 				o.normal = UnityObjectToWorldNormal(v.normal);
 				return o;
 			}
 			
-			inline float3 getAlbedo(v2f i)
+			inline float4 getAlbedo(v2f i)
 			{			
-			    float t = length(i.vertexObjectSpace.xy);
+			    float t = length(i.positionObjectSpace.xy);
 			    t = fmod(t, _RingWidth * 2) / (_RingWidth * 2);
 			    t = abs((t - 0.5) * 2);
-			    float3 col = lerp(_Color1, _Color2, t).xyz;
+			    float4 col = lerp(_Color1, _Color2, t);
 			    
 			    return col;
 			}
@@ -74,32 +71,7 @@
 			fixed4 frag(v2f i) : SV_Target
 			{				
 				i.normal = normalize(i.normal);
-				float3 lightDir = _WorldSpaceLightPos0.xyz;
-				float3 viewDir = normalize(_WorldSpaceCameraPos - i.vertexWorldSpace);
-
-				float3 lightColor = _LightColor0.rgb;
-				float3 albedo = getAlbedo(i);
-
-				float3 specularTint;
-				float oneMinusReflectivity;
-				albedo = DiffuseAndSpecularFromMetallic(
-					albedo, _Metallic, specularTint, oneMinusReflectivity
-				);
-				
-				UnityLight light;
-				light.color = lightColor;
-				light.dir   = lightDir;
-				light.ndotl = DotClamped(i.normal, lightDir);
-				UnityIndirect indirectLight;
-				indirectLight.diffuse  = 0;
-				indirectLight.specular = 0;
-
-				return UNITY_BRDF_PBS(
-					albedo, specularTint,
-					oneMinusReflectivity, _Smoothness,
-					i.normal, viewDir,
-					light, indirectLight
-				);
+				return GetColor(getAlbedo(i), i.positionWorldSpace, i.normal);
 			}
 			ENDCG
 		}
