@@ -99,6 +99,7 @@
 			
 			fixed4 frag (v2f i) : SV_Target
 			{				  
+			    i.normal = normalize(i.normal);
                 half4 color = GetColor(GetAlbedo(i.uv), i.positionWorldSpace, i.normal);
                 
                 UNITY_APPLY_FOG(i.fogCoord, color);
